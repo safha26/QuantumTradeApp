@@ -10,7 +10,7 @@ QuantumTrades is a real-time trading web application built with Django and WebSo
 - Redis server (for channels layer)
 - Node.js (optional)
 - Git (to clone repository)
-
+- Vs Code or pycharm
 ###Installation
 1. Clone the repository:
     git clone <your-repo-url>
