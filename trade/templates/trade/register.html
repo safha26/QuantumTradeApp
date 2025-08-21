@@ -1,0 +1,51 @@
+{% extends "trade/dashboard.html" %}
+{% block title %}
+    <title>RegistrationPage</title>
+<style>
+    .register_container{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+        margin: 10px;
+
+    }
+    .register_container form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 360px;
+        padding: 12px 14px;
+
+}
+
+    p{
+        padding: 2px;
+        text-align: center;
+    }
+    button{
+        width: 10%;
+        margin: auto;
+        padding: 10px;
+        background-color: #8668a5;
+        color: white;
+        font-weight: bolder;
+        font-size: 20px;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<br><br>
+    <h2>Register here</h2>
+    <p>If existing user, please login</p>
+<div class="register_container">
+<form method="post" action ="{% url 'register' %}">
+    {% csrf_token %}
+    {{ form.as_p }}</div>
+    <button type="submit">Register</button>
+</form>
+
+{% endblock %}

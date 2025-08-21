@@ -1,0 +1,341 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% block title %}
+    <title>DashBoard</title>
+    {% endblock %}
+
+    <style>
+        html{
+            height: 100%;
+            margin: 0;}
+        body {
+            background-color: rgb(192, 192, 242);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin:0;
+            color: darkblue;
+        }
+        #main-content{
+            flex: 1;}
+        #welcome {
+            color: rgb(32, 7, 7);
+            text-align: center;
+            font-weight: bolder;
+        }
+        .menu {
+            background-color: #8668a5;
+            padding: 20px;
+            margin: auto;
+            min-width: 100px;
+            width: 100%;
+        }
+        li {
+            display: block;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px;
+            list-style-type: none;
+        }
+        .menu a {
+            color: brown;
+        }
+        #footer {
+            width: 100%;
+            z-index: 1000;
+            text-align: center;
+            margin-bottom: -1px;
+        }
+        table{
+            border-collapse: collapse;
+            border: 3px solid black;
+            padding: 10px;
+            margin: auto;
+            border-radius: 2px;
+            width: 45%;
+        }
+        th{
+            background-color: rgb(168, 154, 194);
+            border: 2px solid black;
+            padding: 15px;
+            text-align: center;
+        }
+        td{
+            background-color: rgb(213, 213, 241);;
+            border: 2px solid black;
+            padding: 10px;
+            text-align: center;
+            border-color: black;
+        }
+        tr{
+            border: 2px solid black;
+            padding: 10px;
+        }
+        h2{
+            text-align: center;
+            display: block;
+            padding: 8px;
+        }
+        h3{
+            text-align: center;
+            display: block;
+            padding: 8px;
+            color: brown;
+        }
+        #your_dashboard{
+            padding: 15px;
+            text-align: center;
+            border: 3px;
+            font-weight: bold;
+            font-size: 25px;
+            margin-top: 20px;
+        }
+    </style>
+<script>
+    // Request notification permission on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            Notification.requestPermission();
+        }
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        // Select all forms with class 'buy-form'
+        document.querySelectorAll('form.buy-form').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault(); // prevent traditional form submit
+
+                const formData = new FormData(form);
+
+                fetch('/place_order/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    },
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('HTTP error: ' + response.status);
+                    }
+                    return response.json(); // expecting JSON response from server
+                })
+                .then(data => {
+                    console.log("Order placed:", data);
+                    // Optionally, show UI feedback here, e.g. alert or update parts of page
+                })
+                .catch(error => {
+                    console.error('Error placing order:', error);
+                    alert('Failed to place the order. Please try again.');
+                });
+            });
+        });
+    });
+
+
+    const socket = new WebSocket('ws://' + window.location.host + '/ws/orderbook/');
+
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        console.log("WebSocket data:", data);
+
+        // Example condition: notify when a new high-price order appears
+        if (data.buy_orders) {
+            data.buy_orders.forEach(order => {
+                if (order.price && order.price > 1000) { // condition example: price threshold
+                    notifyUser(`High price buy order: $${order.price} by ${order.user.username}`);
+                }
+            });
+        }
+
+        // Notify on trade completion or cancellation flags
+        if (data.trade_completed) {
+            notifyUser("Trade completed successfully!");
+        }
+        if (data.trade_canceled) {
+            notifyUser("Trade was canceled.");
+        }
+
+        // Update your order book UI
+        updateOrderBookUI(data);
+        updateTradeHistoryUI(data);
+    };
+
+    function notifyUser(message) {
+        if (Notification.permission === 'granted') {
+            const notification = new Notification("Quantumtraders Notification", {
+                body: message,
+                icon: "/static/icons/trade.png" // OPTIONAL - set your icon or remove
+            });
+
+            notification.onclick = () => {
+                window.focus();
+                notification.close();
+            };
+
+            setTimeout(() => notification.close(), 5000); // Auto-close after 5 sec
+        }
+    }
+
+    function updateOrderBookUI(data) {
+        const buyOrders = data.buy_orders || [];
+        const sellOrders = data.sell_orders || [];
+
+        const buyTableBody = document.getElementById('buy-orders-body');
+        buyTableBody.innerHTML = ''; // clear current rows
+
+        buyOrders.forEach(order => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${order.user.username}</td>
+                <td>${order.price}</td>
+                <td>${order.remaining_quantity}</td>
+                <td>${order.created_at}</td>
+                <td>${order.status}</td>
+            `;
+            buyTableBody.appendChild(row);
+        });
+
+        const sellTableBody = document.getElementById('sell-orders-body');
+        if (sellTableBody) {
+            sellTableBody.innerHTML = '';
+            sellOrders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${order.user.username}</td>
+                    <td>${order.price !== null ? order.price : 'Market'}</td>
+                    <td>${order.remaining_quantity}</td>
+                    <td>${order.created_at}</td>
+                `;
+                sellTableBody.appendChild(row);
+            });
+        }
+    }
+
+    function updateTradeHistoryUI(data) {
+        const trades = data.recent_trades || [];
+        const tradeHistoryBody = document.getElementById('trade-history-body');
+
+        if (tradeHistoryBody) {
+            tradeHistoryBody.innerHTML = '';
+            trades.forEach(trade => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${trade.price}</td>
+                    <td>${trade.quantity}</td>
+                    <td>${new Date(trade.timestamp).toLocaleString()}</td>
+                `;
+                tradeHistoryBody.appendChild(row);
+            });
+        }
+    }
+</script>
+
+</head>
+<body>
+<header>
+    <div>
+        <h1 id="welcome">
+            Welcome to Quantumtraders
+        </h1>
+    </div>
+    <div class="menu">
+        <li><a href="/">Dashboard</a></li>
+        <li><a href="/register">Register</a></li>
+        <li><a href="/login">Login</a></li>
+        <li><a href="/logout">Logout</a></li>
+        <li>
+            {% if request.user.is_authenticated and request.user.userprofile.role == "admin" %}
+                <a href="{% url 'manage_users' %}">User Management</a>
+            {% endif %}
+            {% if request.user.is_authenticated and request.user.userprofile.role == 'trader' %}
+                <a href="{% url 'place_order' %}">Place Order</a>
+            {% endif %}
+        </li>
+    </div>
+</header>
+{% block content %}
+<main id="main-content">
+    {% if user.is_authenticated %}
+    <div id="your_dashboard">
+        <a href= "{% url 'your_dashboard' %}">Your Dashboard</a>
+    </div>
+    {% endif %}
+    <br>
+    <h2>All Buy Orders Listed Below</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Created At</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="buy-orders-body">
+            {% for order in buy_orders %}
+            <tr>
+                <td>{{ order.user.username }}</td>
+                <td>{{ order.price }}</td>
+                <td>{{ order.remaining_quantity }}</td>
+                <td>{{ order.created_at }}</td>
+                <td>{{ order.get_status_display }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">No buy orders available</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br><br><br>
+    <h2>All Sell orders</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Created At</th>
+                <th>Buy</th>
+            </tr>
+        </thead>
+        <tbody id="sell-orders-body">
+            {% for order in sell_orders %}
+            <tr>
+                <td>{{ order.user.username }}</td>
+                <td>
+                    {% if order.price %}
+                        {{ order.price }}
+                    {% else %}
+                        Market
+                    {% endif %}
+                </td>
+                <td>{{ order.remaining_quantity }}</td>
+                <td>{{ order.created_at }}</td>
+                <td>
+                    <form method="post" action="{% url 'place_order' %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="order_type" value="buy">
+                      <input type="hidden" name="order_style" value="limit">
+                      <input type="hidden" name="price" value="{{ order.price }}">
+                      <input type="hidden" name="quantity" value="{{ order.remaining_quantity }}">
+                      <button type="submit">Buy</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">No sell orders available</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br><br>
+</main>
+{% endblock %}
+<footer class="menu" id="footer">
+    <h3>Contact us via jainulsafha@gmail.com</h3>
+</footer>
+</body>
+</html>

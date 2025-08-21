@@ -1,0 +1,243 @@
+{% extends "trade/login.html" %}
+{% block title %}
+    <title>YourDashboard</title>
+<style>
+    table{
+        width: 40%;
+        padding: 15px;
+        margin: 20px;
+    }
+    caption{
+        padding: 15px;
+        margin: 10px;
+    }
+    h2{
+        margin: 15px;
+        margin-top: 25px;
+    }
+
+
+</style>
+{% endblock %}
+
+{% block content %}
+<main>
+    <br><br>
+            <h3>User: {{ request.user.username }} </h3>
+            <h3>Role: {{ request.user.userprofile.role }}</h3><br><br>
+    <section id="buy_sell">
+
+        <h2>Live Order Book</h2>
+        <table id="buy-orders">
+            <caption>Buy orders</caption>
+            <tr>
+                <th>Market / Limit</th>
+                <th>
+                    Price
+                </th>
+                <th>
+                    Quantity
+                </th>
+            </tr>
+            {% if active_orders %}
+            {% for order in active_orders %}
+                <tr>
+                    <td>{{ order.order_style }}</td>
+                    <td>{{ order.price }}</td>
+                    <td>{{ order.quantity }}</td>
+                </tr>
+            {% endfor %}
+            {% else %}
+                <tr><td colspan="3">No active orders</td></tr>
+                {% endif %}
+        </table><br><br>
+
+        <table id="sell-orders">
+            <caption>Sell orders</caption>
+            <tr>
+                <th>Sold Orders</th>
+                <th>
+                    Price
+                </th>
+                <th>
+                    Quantity
+                </th>
+            </tr>
+            {% if user_sell_orders %}
+            {% for order in user_sell_orders %}
+                <tr>
+                    <td>{{ order.order_style }}</td>
+                    <td>{{ order.price }}</td>
+                    <td>{{ order.quantity }}</td>
+                </tr>
+            {% endfor %}
+            {% else %}
+                <tr><td colspan="3">No active orders</td></tr>
+                {% endif %}
+        </table><br><br>
+
+    <h2>History (Recent trades) </h2>
+    <table id="trade-history">
+        <caption>Trade history</caption>
+        <tr>
+            <th>
+                Price
+            </th>
+            <th>
+                Quantity
+            </th>
+            <th>
+                Timestamp
+            </th>
+        </tr>
+        {% if user_trades %}
+            {% for trade in user_trades %}
+                <tr>
+                    <td>{{ trade.price }}</td>
+                    <td>{{ trade.quantity }}</td>
+                    <td>{{ trade.timestamp }}</td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="3">No trades</td>
+            </tr>
+        {% endif %}
+    </table><br><br>
+</section>
+
+<script>
+    functionUpdateOrders(tableId, orders){
+        let table = document.getElementById(tableId);
+        while(table.rows.length >2){
+            table.deleteRow(2);
+        }
+        orders.forEach(function(order){
+            let row = table.insertRow();
+            let priceCell = row.insertCell();
+            let qtyCell = row.insertCell();
+            priceCell.innerHTML = order.price;
+            qtyCell.innerHTML = order.quantity;}
+        );
+    }
+    function updateTrades(trades){
+        let table = document.getElementById('table-history');
+        while(table.rows.length > 1){
+            table.deleteRow(1);
+        }
+        trades.forEach(function(trade){
+            let row = table.insertRow();
+            row.insertCell().innerText = trade.price;
+            row.insertCell().innerText = trade.quantity;
+            row.insertCell().innerHTML = trade.timestamp;
+        });
+    }
+    function fetchOrderBook(){
+        fetch('/api/order_book/')
+        .then(response => response.json())
+        .then(data => {
+            updateOrders('buy-orders', data.buy-orders);
+            updateOrders('sell-orders', data.sell-orders);
+        });
+    }
+    function fetchTradeHistory(){
+        fetch('/api/trade_history/')
+        .then(response => response.json())
+        .then(data => {
+            updateTrades(data.trades);
+        });
+    }
+    //Initial load and auto-refresh
+    fetchOrderBook();
+    fetchTradeHistory();
+    setInterval(() => {
+        fetchOrderBook();
+        fetchTradeHistory();
+    }, 4000);
+
+
+</script>
+<!--<section>-->
+<!--        <div>-->
+<!--            <br><br>-->
+<!--        <h2>Live Buy Orders</h2>-->
+
+<!--        <table>-->
+<!--            <tr><th>Price</th><th>Quantity</th></tr>-->
+<!--            {% for order in buy_orders %}-->
+<!--            <tr>-->
+<!--                <td>{{ order.price }}</td>-->
+<!--                <td>{{ order.quantity|add:"-order.quantity_filled" }}</td>-->
+<!--            </tr>-->
+<!--            {% empty %}-->
+<!--            <tr><td colspan="2">No buy orders</td></tr>-->
+<!--            {% endfor %}-->
+<!--        </table><br><br>-->
+<!--        </div>-->
+<!--        <div>-->
+<!--            <h2>Live Sell Orders</h2>-->
+<!--            <table>-->
+<!--                <tr><th>Price</th><th>Quantity</th></tr>-->
+<!--                {% for order in sell_orders %}-->
+<!--                <tr>-->
+<!--                    <td>{{ order.price }}</td>-->
+<!--                    <td>-->
+<!--                        {{ order.quantity }}-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--                {% empty %}-->
+<!--                <tr><td colspan="2">No sell orders</td></tr>-->
+<!--                {% endfor %}-->
+<!--            </table><br><br>-->
+<!--        </div>-->
+        <div>
+            <h2>Recent Trades</h2>
+            <table>
+                <tr><th>Price</th><th>Quantity</th><th>Status</th><th>Time</th></tr>
+                {% for trade in user_trades %}
+                <tr>
+                    <td>{{ trade.price }}</td>
+                    <td>{{ trade.quantity }}</td>
+                    <td>
+                        {% if trade.buy_order.user == request.user %}Bought{% else %}Sold{% endif %}
+                    </td>
+                    <td>{{ trade.timestamp }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No trades</td></tr>
+                {% endfor %}
+            </table><br><br>
+        </div>
+        <div>
+            <h2>Your Active Orders</h2>
+            <table>
+                <tr>
+                    <th>Type</th>
+                    <th>Style</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                {% for order in active_orders %}
+                <tr>
+                    <td>{{ order.order_type }}</td>
+                    <td>{{ order.order_style }}</td>
+                    <td>{{ order.price }}</td>
+                    <td>{{ order.quantity }}</td>
+                    <td>{{ order.status }}</td>
+                    <td>
+                        <form method="post" action="{% url 'cancel_order' order.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit">Cancel Order</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6">No active orders</td></tr>
+                {% endfor %}
+            </table><br><br>
+        </div>
+</section>
+</main>
+{% endblock %}

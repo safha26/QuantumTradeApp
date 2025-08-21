@@ -1,0 +1,62 @@
+<style>
+        body {
+            background-color: rgb(192, 192, 242);
+            margin: 0;
+        }
+        #welcome {
+            color: rgb(32, 7, 7);
+            text-align: center;
+            font-weight: bolder;
+        }
+        .menu {
+            background-color: #c5afe6;
+            padding: 20px;
+            margin: auto;
+            min-width: 100px;
+            width: 100%;
+        }
+        li {
+            display: block;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px;
+            list-style-type: none;
+        }
+        footer {
+            bottom: 0;
+            width: 80%;
+            margin: 0 auto;
+            left: 0;            /* Required for margin auto centering */
+            right: 0;           /* Required for margin auto centering */
+            z-index: 1000;
+            text-align: center;
+            border-radius: 8px 8px 0 0; /* optional styling */
+        }
+        table{
+            border-collapse: collapse;
+            border: 3px solid black;
+            padding: 10px;
+            margin: auto;
+            border-radius: 2px;
+        }
+        th{
+            background-color: rgb(168, 154, 194);
+            border: 2px solid black;
+            padding: 15px;
+            text-align: center;
+        }
+        td{
+            background-color: rgb(213, 213, 241);;
+            border: 2px solid black;
+            padding: 10px;
+            text-align: center;
+            border-color: black;
+        }
+        tr{
+            border: 2px solid black;
+        }
+        h2{
+            text-align: center;
+            display: block;
+        }
+</style>

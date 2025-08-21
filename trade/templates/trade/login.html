@@ -1,0 +1,38 @@
+{% extends "trade/dashboard.html" %}
+{% block title %}
+    <title>LoginPage</title>
+<style>
+    .login_container{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+        margin: 10px;
+    }
+
+    button{
+        width: 10%;
+        margin: auto;
+        padding: 10px;
+        background-color: #8668a5;
+        color: white;
+        font-weight: bolder;
+        font-size: 20px;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Login</h2>
+<div class="login_container">
+    <form method="post" action="{% url 'login' %}">
+      {% csrf_token %}
+      Username:<input type="text" name="username" required> <br><br><br>
+      Password:<input type="password" name="password" required> <br><br><br>
+        </div>
+      <button type="submit">Login</button>
+    </form>
+
+{% endblock %}

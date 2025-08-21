@@ -1,0 +1,35 @@
+{% extends "trade/dashboard.html" %}
+{% load static %}
+{% block content %}
+  <h2>User Management (Admin Only)</h2>
+  <table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Current Role</th>
+        <th>Change Role</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.username }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.userprofile.role }}</td>
+        <td>
+          <form method="POST" style="margin:0;">
+            {% csrf_token %}
+            <input type="hidden" name="user_id" value="{{ user.id }}">
+            <select name="role" required>
+              <option value="trader" {% if user.userprofile.role == "trader" %}selected{% endif %}>Trader</option>
+              <option value="admin" {% if user.userprofile.role == "admin" %}selected{% endif %}>Admin</option>
+            </select>
+            <button type="submit">Update</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table><br><br>
+{% endblock %}

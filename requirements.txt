@@ -1,0 +1,8 @@
+django
+mysqlclient
+djangorestframework
+channels
+channels-redis
+daphne
+drf-yasg
+django-extensions

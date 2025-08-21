@@ -1,0 +1,61 @@
+{% extends "trade/dashboard.html" %}
+{% block title %}
+    <title>PlaceOrder</title>
+    <style>
+        h2, select, label, input, button{
+            color: darkblue;
+            text-align: justify-content;
+            padding: 8px;
+            margin: 10px;
+            font-size: px;
+
+        }
+        select, label, input{
+            width: 30%;}
+        #form{
+            display: block;
+            text-align: center;
+            margin 0 auto;
+            width: 100%;
+        }
+        button{
+            width: 10%;
+            margin: auto;
+            padding: 10px;
+            background-color: #8668a5;
+            color: white;
+            font-weight: bolder;
+            font-size: 20px;}
+
+    </style>
+{% endblock %}
+
+{% block content %}
+<br>
+<div id="form">
+    <h2>Place Your Order Here</h2><br>
+    <form method="post" action="{% url 'place_order' %}">
+      {% csrf_token %}
+      <label>Order Type:</label> <br>
+      <select name="order_type" required>
+        <option value="buy">Buy</option>
+        <option value="sell">Sell</option>
+      </select><br><br>
+
+      <label>Order Style:</label> <br>
+      <select name="order_style" required>
+        <option value="limit">Limit</option>
+        <option value="market">Market</option>
+      </select><br><br>
+
+      <label>Price for Limit orders:</label><br>
+      <input type="number" name="price" step="0.01" placeholder="Leave the price empty if you place for market orders"><br><br>
+
+      <label>Quantity:</label><br>
+      <input type="number" name="quantity" min="1" required><br><br>
+<br><br>
+      <button type="submit">PLACE ORDER</button>
+
+    </form>
+</div>
+{% endblock %}
