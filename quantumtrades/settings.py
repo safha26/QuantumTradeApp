@@ -84,7 +84,7 @@ DATABASES = {
         'NAME': os.getenv('MYSQL_DATABASE', 'quantumtrades_db'),
         'USER': os.getenv('MYSQL', 'root'),
         'PASSWORD': os.getenv('MYSQLPASSWORD', '2002'),
-        'HOST': os.getenv('MYSQL_HOST','db'),
+        'HOST': os.getenv('MYSQL_HOST','localhost'),
         'PORT': '3306',
     }
 }
